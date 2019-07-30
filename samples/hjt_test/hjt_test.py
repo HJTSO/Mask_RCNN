@@ -50,7 +50,7 @@ class ShapesConfig(Config):
     IMAGES_PER_GPU = 1
 
     # Number of classes (including background)
-    NUM_CLASSES = 1   # background + 3 shapes注意这里要是你类别，我是七个类别，所以为7，外加背景1个
+    NUM_CLASSES = 1 + 1  # background + 3 shapes注意这里要是你类别，我是七个类别，所以为7，外加背景1个
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
@@ -65,7 +65,7 @@ class ShapesConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 32
 
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 50
+    STEPS_PER_EPOCH = 9  # 50
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 10
@@ -119,16 +119,15 @@ class ShapesDataset(utils.Dataset):
         for i in range(count):
             # print(imglist[i])
             filestr = imglist[i].split(".")[0]
-         
             mask_path = dataset_root_path + filestr + "/label.png"
             yaml_path = dataset_root_path + filestr + "/info.yaml"
-            print(dataset_root_path  + filestr + "/img.png", 'img_path')
+            print(dataset_root_path + filestr + "/img.png", 'img_path')
             print(mask_path)
             print(yaml_path)
             ###打印这几个信息的意思是为了确定数据路径对不对
             cv_img = cv2.imread(dataset_root_path + filestr + "/img.png")
- 
-            self.add_image("shapes", image_id=i, path= dataset_root_path + filestr + "/img.png",
+            # plt.subplot(1, 1, 1), plt.title('test'), plt.imshow(cv_img)
+            self.add_image("shapes", image_id=i, path=dataset_root_path + filestr + "/img.png",
                            width=cv_img.shape[1], height=cv_img.shape[0], mask_path=mask_path, yaml_path=yaml_path)
         
     def load_mask(self, image_id):
@@ -155,7 +154,7 @@ class ShapesDataset(utils.Dataset):
             if labels[i].find("signature") != -1:
                 labels_form.append("signature")
 
-##这里你是几类你就照样子写几个就行，我是7类，所以写了七个
+        ##这里你是几类你就照样子写几个就行，我是7类，所以写了七个
 
         class_ids = np.array([self.class_names.index(s) for s in labels_form])
         return mask, class_ids.astype(np.int32)
@@ -177,7 +176,7 @@ def get_ax(rows=1, cols=1, size=8):
 ############################################################
 
 
-dataset_root_path="/Users/gsl/Desktop/receipt/json/"###存放训练数据的目录
+dataset_root_path="/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"###存放训练数据的目录
 img_floder = dataset_root_path
 
 imglist = os.listdir(img_floder)
@@ -219,11 +218,11 @@ elif init_with == "last":
 # which layers to train by name pattern.
 model.train(dataset_train, dataset_val,
             learning_rate=config.LEARNING_RATE,
-            epochs=30,
+            epochs=2,   # 30
             layers='heads')
  
 
 model.train(dataset_train, dataset_val,
             learning_rate=config.LEARNING_RATE / 10,
-            epochs=60,
+            epochs=2,  # 30
             layers="all")
