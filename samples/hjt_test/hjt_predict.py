@@ -1,41 +1,27 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import random
-import math
-import numpy as np
 import skimage.io
-import matplotlib
-import matplotlib.pyplot as plt
-import cv2
-import time
+import skimage.transform
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-
 from datetime import datetime
+
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR) # To find local version of the library
-from mrcnn import utils
 from mrcnn.config import Config
 import mrcnn.model as modellib
 from mrcnn import visualize
-# Import COCO config
-sys.path.append(os.path.join(ROOT_DIR, "samples/coco/")) # To find local version
-from samples.coco import coco
 
-# Directory to save logs and trained model
+# ● Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
-###这里为自己训练的模型的地址和模型名称
-# Local path to trained weights file
-COCO_MODEL_PATH = os.path.join(ROOT_DIR ,"logs_", "shapes20190730T1730", "mask_rcnn_shapes_0001.h5")
-# Download COCO trained weights from Releases if needed
-# if not os.path.exists(COCO_MODEL_PATH):
-#     utils.download_trained_weights(COCO_MODEL_PATH)
-#     print("cuiwei***********************")
 
-# 测试图片目录
+# Local path to trained weights file
+COCO_MODEL_PATH = os.path.join(ROOT_DIR, "logs_", "shapes20190805T0239", "mask_rcnn_shapes_0030.h5")
+
+# the path of test image
 IMAGE_DIR = "/Users/gsl/Desktop/receipt"
 
 class ShapesConfig(Config):
@@ -51,12 +37,13 @@ class ShapesConfig(Config):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
-    # Number of classes (including background)
-    NUM_CLASSES = 1 + 1  # background + 7个类别
+    # ● Number of classes (including background)
+    NUM_CLASSES = 1 + 1
 
+    # ● the same with training
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
-    IMAGE_MIN_DIM = 256   #和训练的时候保持一致
+    IMAGE_MIN_DIM = 256
     IMAGE_MAX_DIM = 256
 
     # Use smaller anchors because our image and objects are small
@@ -64,7 +51,7 @@ class ShapesConfig(Config):
 
     # Reduce training ROIs per image because the images are small and have
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
-    TRAIN_ROIS_PER_IMAGE =32
+    TRAIN_ROIS_PER_IMAGE = 32
 
     # Use a small epoch since the data is simple
     STEPS_PER_EPOCH = 50
@@ -76,18 +63,14 @@ class ShapesConfig(Config):
 config = ShapesConfig()
 config.display()
 
-#import train_tongue
-#class InferenceConfig(coco.CocoConfig):
 class InferenceConfig(ShapesConfig):
     # Set batch size to 1 since we'll be running inference on
     # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
+
 config = InferenceConfig()
-
-model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-
 
 # Create model object in inference mode.
 model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
@@ -102,14 +85,16 @@ class_names = ['BG', 'signature']
 # Load a random image from the images folder
 # file_names = next(os.walk(IMAGE_DIR))[2]
 
-##这里指定了要预测哪一张图片
-image = skimage.io.imread(os.path.join(IMAGE_DIR, "sakai_receipt.jpg"))
-# sakai_receipt kikuno_receipt
+# ● the image to test
+image = skimage.io.imread(os.path.join(IMAGE_DIR, "test_image_2.jpg"))
+# image = skimage.transform.rescale(image, 0.3)
+# sakai_receipt kikuno_receipt kurosawa test_image_1.jpg
 
-a=datetime.now()
 # Run detection
+a=datetime.now()
 results = model.detect([image], verbose=1)
 b=datetime.now()
+
 # Visualize results
 print("Time:", (b-a).seconds)
 r = results[0]

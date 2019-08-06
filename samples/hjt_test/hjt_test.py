@@ -29,6 +29,7 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
 
 # Local path to trained weights file
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+
 # Download COCO trained weights from Releases if needed
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
@@ -49,14 +50,14 @@ class ShapesConfig(Config):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
-    # Number of classes (including background)
-    NUM_CLASSES = 1 + 1  # background + 3 shapes注意这里要是你类别，我是七个类别，所以为7，外加背景1个
+    # ● Number of classes (including background)
+    NUM_CLASSES = 1 + 1  # background + myClass shapes
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
     IMAGE_MIN_DIM = 256
     IMAGE_MAX_DIM = 256
-    ##定义图片大小
+
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (8*6, 16*6, 32*6, 64*6, 128*6)  # anchor side in pixels
 
@@ -65,7 +66,7 @@ class ShapesConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 32
 
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 9  # 50
+    STEPS_PER_EPOCH = 100  # 50
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 10
@@ -108,10 +109,9 @@ class ShapesDataset(utils.Dataset):
         count: number of images to generate.
         height, width: the size of the generated images.
         """
-        # Add classes
-    # Add classes. We have only one class to add.
+        # ● Add classes. We have only one class to add.
         self.add_class("shapes", 1, "signature")
-        ###按照自己的数据类别添加就行
+
         # Add images
         # Generate random specifications of images (i.e. color and
         # list of shapes sizes and locations). This is more compact than
@@ -121,10 +121,12 @@ class ShapesDataset(utils.Dataset):
             filestr = imglist[i].split(".")[0]
             mask_path = dataset_root_path + filestr + "/label.png"
             yaml_path = dataset_root_path + filestr + "/info.yaml"
-            print(dataset_root_path + filestr + "/img.png", 'img_path')
-            print(mask_path)
-            print(yaml_path)
-            ###打印这几个信息的意思是为了确定数据路径对不对
+
+            # test path
+            # print(dataset_root_path + filestr + "/img.png", 'img_path')
+            # print(mask_path)
+            # print(yaml_path)
+
             cv_img = cv2.imread(dataset_root_path + filestr + "/img.png")
             # plt.subplot(1, 1, 1), plt.title('test'), plt.imshow(cv_img)
             self.add_image("shapes", image_id=i, path=dataset_root_path + filestr + "/img.png",
@@ -137,7 +139,8 @@ class ShapesDataset(utils.Dataset):
         global iter_num
         print("image_id", image_id)
         info = self.image_info[image_id]
-        count = 1  # number of object
+        # ● number of object
+        count = 1
         img = Image.open(info['mask_path'])
         num_obj = self.get_obj_index(img)
         mask = np.zeros([info['height'], info['width'], num_obj], dtype=np.uint8)
@@ -150,11 +153,11 @@ class ShapesDataset(utils.Dataset):
         labels = []
         labels = self.from_yaml_get_class(image_id)
         labels_form = []
+
+        # ● add class label
         for i in range(len(labels)):
             if labels[i].find("signature") != -1:
                 labels_form.append("signature")
-
-        ##这里你是几类你就照样子写几个就行，我是7类，所以写了七个
 
         class_ids = np.array([self.class_names.index(s) for s in labels_form])
         return mask, class_ids.astype(np.int32)
@@ -176,7 +179,8 @@ def get_ax(rows=1, cols=1, size=8):
 ############################################################
 
 
-dataset_root_path="/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"###存放训练数据的目录
+# ● the path of training images
+dataset_root_path="/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"
 img_floder = dataset_root_path
 
 imglist = os.listdir(img_floder)
@@ -195,8 +199,8 @@ dataset_val.prepare()
 model = modellib.MaskRCNN(mode="training", config=config,
                           model_dir=MODEL_DIR)
  
-# Which weights to start with?
-init_with = "coco"  # imagenet, coco, or last
+# Which weights to start with imagenet, coco, or last
+init_with = "coco"
  
 if init_with == "imagenet":
     model.load_weights(model.get_imagenet_weights(), by_name=True)
@@ -218,11 +222,11 @@ elif init_with == "last":
 # which layers to train by name pattern.
 model.train(dataset_train, dataset_val,
             learning_rate=config.LEARNING_RATE,
-            epochs=2,   # 30
+            epochs=10,   # 30
             layers='heads')
  
 
 model.train(dataset_train, dataset_val,
             learning_rate=config.LEARNING_RATE / 10,
-            epochs=2,  # 30
+            epochs=60,  # 60
             layers="all")
