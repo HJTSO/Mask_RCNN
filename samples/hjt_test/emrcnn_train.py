@@ -26,6 +26,9 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
 # Local path to trained weights file
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
+# The path of training images
+DATASET_ROOT_PATH = "/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"
+
 # Download COCO trained weights from Releases if needed
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
@@ -119,23 +122,22 @@ class SignatureDataset(utils.Dataset):
         for i in range(count):
             # print(imglist[i])
             filestr = imglist[i].split(".")[0]
-            mask_path = dataset_root_path + filestr + "/label.png"
-            yaml_path = dataset_root_path + filestr + "/info.yaml"
+            mask_path = DATASET_ROOT_PATH + filestr + "/label.png"
+            yaml_path = DATASET_ROOT_PATH + filestr + "/info.yaml"
 
             # test path
-            # print(dataset_root_path + filestr + "/img.png", 'img_path')
+            # print(DATASET_ROOT_PATH + filestr + "/img.png", 'img_path')
             # print(mask_path)
             # print(yaml_path)
 
-            cv_img = cv2.imread(dataset_root_path + filestr + "/img.png")
+            cv_img = cv2.imread(DATASET_ROOT_PATH + filestr + "/img.png")
             # plt.subplot(1, 1, 1), plt.title('test'), plt.imshow(cv_img)
-            self.add_image("signature", image_id=i, path=dataset_root_path + filestr + "/img.png",
+            self.add_image("signature", image_id=i, path=DATASET_ROOT_PATH + filestr + "/img.png",
                            width=cv_img.shape[1], height=cv_img.shape[0], mask_path=mask_path, yaml_path=yaml_path)
         
     def load_mask(self, image_id):
         """Generate instance masks for signature of the given image ID.
         """
-
         global iter_num
         print("image_id", image_id)
         info = self.image_info[image_id]
@@ -150,7 +152,6 @@ class SignatureDataset(utils.Dataset):
             mask[:, :, i] = mask[:, :, i] * occlusion
 
             occlusion = np.logical_and(occlusion, np.logical_not(mask[:, :, i]))
-        labels = []
         labels = self.from_yaml_get_class(image_id)
         labels_form = []
 
@@ -179,54 +180,49 @@ def get_ax(rows=1, cols=1, size=8):
 #  Training
 ############################################################
 
+if __name__ == '__main__':
+    img_floder = DATASET_ROOT_PATH
+    imglist = os.listdir(img_floder)
+    count = len(imglist)
 
-# ● the path of training images
-dataset_root_path="/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"
-img_floder = dataset_root_path
+    dataset_train = SignatureDataset()
+    dataset_train.load_signature(count, DATASET_ROOT_PATH, imglist)
+    dataset_train.prepare()
 
-imglist = os.listdir(img_floder)
-count = len(imglist)
+    dataset_val = SignatureDataset()
+    dataset_val.load_signature(2, DATASET_ROOT_PATH, imglist)
+    dataset_val.prepare()
 
-dataset_train = SignatureDataset()
-dataset_train.load_signature(count, dataset_root_path, imglist)
-dataset_train.prepare()
+    # Create model in training mode
+    model = modellib.MaskRCNN(mode="training", config=config,
+                              model_dir=MODEL_DIR)
+    # Which weights to start with imagenet, coco, or last
+    init_with = "coco"
 
-dataset_val = SignatureDataset()
-dataset_val.load_signature(2, dataset_root_path, imglist)
-dataset_val.prepare()
- 
+    if init_with == "imagenet":
+        model.load_weights(model.get_imagenet_weights(), by_name=True)
+    elif init_with == "coco":
+        # Load weights trained on MS COCO, but skip layers that
+        # are different due to the different number of classes
+        # See README for instructions to download the COCO weights
+        # print(COCO_MODEL_PATH)
+        model.load_weights(COCO_MODEL_PATH, by_name=True,
+                           exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                    "mrcnn_bbox", "mrcnn_mask"])
+    elif init_with == "last":
+        # Load the last model you trained and continue training
+        model.load_weights(model.find_last()[1], by_name=True)
 
-# Create model in training mode
-model = modellib.MaskRCNN(mode="training", config=config,
-                          model_dir=MODEL_DIR)
- 
-# Which weights to start with imagenet, coco, or last
-init_with = "coco"
- 
-if init_with == "imagenet":
-    model.load_weights(model.get_imagenet_weights(), by_name=True)
-elif init_with == "coco":
-    # Load weights trained on MS COCO, but skip layers that
-    # are different due to the different number of classes
-    # See README for instructions to download the COCO weights
-    # print(COCO_MODEL_PATH)
-    model.load_weights(COCO_MODEL_PATH, by_name=True,
-                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
-                                "mrcnn_bbox", "mrcnn_mask"])
-elif init_with == "last":
-    # Load the last model you trained and continue training
-    model.load_weights(model.find_last()[1], by_name=True)
- 
-# Train the head branches
-# Passing layers="heads" freezes all layers except the head
-# layers. You can also pass a regular expression to select
-# which layers to train by name pattern.
-model.train(dataset_train, dataset_val,
-            learning_rate=config.LEARNING_RATE,
-            epochs=10,   # 30
-            layers='heads')
+    # Train the head branches
+    # Passing layers="heads" freezes all layers except the head
+    # layers. You can also pass a regular expression to select
+    # which layers to train by name pattern.
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE,
+                epochs=10,   # 30
+                layers='heads')
 
-model.train(dataset_train, dataset_val,
-            learning_rate=config.LEARNING_RATE / 10,
-            epochs=60,  # 60
-            layers="all")
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE / 10,
+                epochs=60,  # 60
+                layers="all")
