@@ -45,16 +45,6 @@ class SignatureConfig(Config):
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (8 * 6, 16 * 6, 32 * 6, 64 * 6, 128 * 6)  # anchor side in pixels
 
-    # Reduce training ROIs per image because the images are small and have
-    # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
-    TRAIN_ROIS_PER_IMAGE = 32
-
-    # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 50
-
-    # use small validation steps since the epoch is small
-    VALIDATION_STEPS = 10
-
 
 class EMrcnn:
     """Mask-RCNN to detect signature in receipt image.
@@ -105,8 +95,8 @@ class EMrcnn:
 
         # For show: Visualize results
         # COCO Class names: Index of the class in the list is its ID.
-        # class_names = ['BG', 'signature']
-        # visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], class_names, r['scores'])
+        class_names = ['BG', 'signature']
+        visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], class_names, r['scores'])
 
         if r['scores'].size:
             return r['scores'], r['rois']
