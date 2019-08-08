@@ -10,15 +10,14 @@ import cv2
 from PIL import Image
 import matplotlib
 import matplotlib.pyplot as plt
+# Root directory of the project
+ROOT_DIR = os.path.abspath("./")
+sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn.config import Config
 from mrcnn import utils
 import mrcnn.model as modellib
 from mrcnn import visualize
 from mrcnn.model import log
-
-# Root directory of the project
-ROOT_DIR = os.path.abspath("./")
-sys.path.append(ROOT_DIR)  # To find local version of the library
 
 # Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
@@ -27,7 +26,8 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
 # The path of training images
-DATASET_ROOT_PATH = "/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"
+# DATASET_ROOT_PATH = "/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"
+DATASET_ROOT_PATH = "/home/ubuntu/Project_GSL/Mask_RCNN-master/images/receipt/"
 
 # Download COCO trained weights from Releases if needed
 if not os.path.exists(COCO_MODEL_PATH):
@@ -46,8 +46,8 @@ class SignatureConfig(Config):
     # Give the configuration a recognizable name
     NAME = "signature"
 
-    # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
-    # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
+    # Train on 1 GPU and 1 images per GPU. We can put multiple images on each
+    # GPU because the images are small. Batch size is 1 (GPUs * images/GPU).
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     # which layers to train by name pattern.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
-                epochs=10,   # 30
+                epochs=30,   # 30
                 layers='heads')
 
     model.train(dataset_train, dataset_val,

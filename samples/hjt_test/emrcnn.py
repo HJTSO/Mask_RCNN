@@ -11,13 +11,13 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./")
-sys.path.append(ROOT_DIR) # To find local version of the library
+sys.path.append(ROOT_DIR)  # To find local version of the library
 
 # ● Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
 
 # ● Local path to trained weights file
-COCO_MODEL_PATH = os.path.join(ROOT_DIR, "model", "mask_rcnn_shapes_0030.h5")
+COCO_MODEL_PATH = os.path.join(ROOT_DIR, "model", "mask_rcnn_signature_0030.h5")
 
 
 class SignatureConfig(Config):
