@@ -199,9 +199,7 @@ if __name__ == '__main__':
     # Which weights to start with imagenet, coco, or last
     init_with = "coco"
 
-    if init_with == "imagenet":
-        model.load_weights(model.get_imagenet_weights(), by_name=True)
-    elif init_with == "coco":
+    if init_with == "coco":
         # Load weights trained on MS COCO, but skip layers that
         # are different due to the different number of classes
         # See README for instructions to download the COCO weights
