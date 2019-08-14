@@ -4,6 +4,8 @@ import sys
 import skimage.io
 import skimage.transform
 import time
+import glob
+import matplotlib.pyplot as plt
 from mrcnn.config import Config
 import mrcnn.model as modellib
 from mrcnn import visualize
@@ -17,7 +19,7 @@ sys.path.append(ROOT_DIR)  # To find local version of the library
 MODEL_DIR = os.path.join(ROOT_DIR, "logs_")
 
 # ● Local path to trained weights file
-COCO_MODEL_PATH = os.path.join(ROOT_DIR, "model", "mask_rcnn_signature_0030.h5")
+COCO_MODEL_PATH = os.path.join(ROOT_DIR, "model", "mask_rcnn_signature.h5")
 
 
 class SignatureConfig(Config):
@@ -106,7 +108,20 @@ class EMrcnn:
 
 if __name__ == '__main__':
     # test
-    image = 'pic/kikuno_receipt.jpg'
+    num = '3'
+    directory = os.path.join('/Users/gsl/Desktop/e-mrcnn-GPU-test/test', num)
+    print(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+
     mask_rcnn = EMrcnn()
-    scores = mask_rcnn.test_image(image)
-    print(scores[0])
+    list_of_files = sorted(glob.glob('/Users/gsl/Desktop/e-mrcnn-GPU-test/test/*.jpg'))
+    for file in list_of_files:
+        print("\nImage name:", file)
+        scores = mask_rcnn.test_image(file)
+        print("Scores:", scores[0])
+
+    image_result = []
+    test_list_of_files = sorted(glob.glob('/Users/gsl/Desktop/e-mrcnn-GPU-test/test/' + num + '/*.png'))
+    for file in list_of_files:
+        image_result.append(skimage.io.imread(file))

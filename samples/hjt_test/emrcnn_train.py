@@ -27,7 +27,7 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
 # The path of training images
 # DATASET_ROOT_PATH = "/Users/gsl/Desktop/Mask_RCNN-master/images/receipt/"
-DATASET_ROOT_PATH = "/home/ubuntu/Project_GSL/Mask_RCNN-master/images/receipt/"
+DATASET_ROOT_PATH = "/home/ubuntu/Project_GSL/Mask_RCNN/images/receipt/"
 
 # Download COCO trained weights from Releases if needed
 if not os.path.exists(COCO_MODEL_PATH):
@@ -56,8 +56,8 @@ class SignatureConfig(Config):
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
-    IMAGE_MIN_DIM = 256
-    IMAGE_MAX_DIM = 256
+    IMAGE_MIN_DIM = 512
+    IMAGE_MAX_DIM = 512
 
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (8*6, 16*6, 32*6, 64*6, 128*6)  # anchor side in pixels
@@ -67,7 +67,7 @@ class SignatureConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 32
 
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 50  # 50
+    STEPS_PER_EPOCH = 60  # 50
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 10
@@ -181,6 +181,9 @@ def get_ax(rows=1, cols=1, size=8):
 ############################################################
 
 if __name__ == '__main__':
+    train_start = time.time()
+    print("***** The start time:", train_start)
+
     img_floder = DATASET_ROOT_PATH
     imglist = os.listdir(img_floder)
     count = len(imglist)
@@ -199,7 +202,9 @@ if __name__ == '__main__':
     # Which weights to start with imagenet, coco, or last
     init_with = "coco"
 
-    if init_with == "coco":
+    if init_with == "imagenet":
+        model.load_weights(model.get_imagenet_weights(), by_name=True)
+    elif init_with == "coco":
         # Load weights trained on MS COCO, but skip layers that
         # are different due to the different number of classes
         # See README for instructions to download the COCO weights
@@ -212,15 +217,21 @@ if __name__ == '__main__':
         model.load_weights(model.find_last()[1], by_name=True)
 
     # Train the head branches
-    # Passing layers="heads" freezes all layers except the head
-    # layers. You can also pass a regular expression to select
-    # which layers to train by name pattern.
+    # Passing layers="heads" freezes all layers except the head layers.
+    # You can also pass a regular expression to select which layers to train by name pattern.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
-                epochs=30,   # 30
+                epochs=40,   # 30
                 layers='heads')
 
+    # Fine tune all layers
+    # Passing layers="all" trains all layers.
+    # You can also pass a regular expression to select which layers to train by name pattern.
     model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE / 10,
-                epochs=60,  # 60
-                layers="all")
+                learning_rate=config.LEARNING_RATE,
+                epochs=40,  # 30
+                layers='all')
+
+    train_end = time.time()
+    print("***** The end time:", train_end)
+    print("***** The training Time:.%s Seconds" % (train_end - train_start))
