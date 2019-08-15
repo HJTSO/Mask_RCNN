@@ -5,7 +5,6 @@ import skimage.io
 import skimage.transform
 import time
 import glob
-import matplotlib.pyplot as plt
 from mrcnn.config import Config
 import mrcnn.model as modellib
 from mrcnn import visualize
@@ -108,7 +107,7 @@ class EMrcnn:
 
 if __name__ == '__main__':
     # test
-    num = '3'
+    num = '5'
     directory = os.path.join('/Users/gsl/Desktop/e-mrcnn-GPU-test/test', num)
     print(directory)
     if not os.path.exists(directory):
@@ -116,10 +115,16 @@ if __name__ == '__main__':
 
     mask_rcnn = EMrcnn()
     list_of_files = sorted(glob.glob('/Users/gsl/Desktop/e-mrcnn-GPU-test/test/*.jpg'))
+
+    test_start = time.time()
+    print("***** The start time:", test_start)
     for file in list_of_files:
         print("\nImage name:", file)
         scores = mask_rcnn.test_image(file)
         print("Scores:", scores[0])
+    test_end = time.time()
+    print("***** The end time:", test_end)
+    print("***** The testing Time for every image:.%s Seconds" % ((test_end - test_start)/len(list_of_files)))
 
     image_result = []
     test_list_of_files = sorted(glob.glob('/Users/gsl/Desktop/e-mrcnn-GPU-test/test/' + num + '/*.png'))
